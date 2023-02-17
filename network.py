@@ -6,13 +6,11 @@ class Network:
         self.links = links
         self.pipes = pipes
         self.incidence_matrix = incidence_matrix
+        self.active_mat = -1
         self.tunnels = tunnels
         self.num_links = 0
         self.num_pipes = 0
 
-    def show_inc_matrix(self): #showing the incidence matrix (each row is a link's vector)
-        for row in self.incidence_matrix:
-            print(row)
 
     def add_link(self, new_link):
         self.num_links +=1 #one more link
@@ -32,21 +30,41 @@ class Network:
         for l in range(self.num_links):
             #first, update throughputs
             total_throughput = 0
-            total_links = 0
+            total_con = 0
+            total_active_con = 0
             for p in range(self.num_pipes):
                 total_throughput += self.incidence_matrix[l][p] * self.pipes[p].tput
-                total_links += self.incidence_matrix[l][p] * self.pipes[p].num_connections
+                total_con += self.incidence_matrix[l][p] * self.pipes[p].num_connections
+                total_active_con += self.incidence_matrix[l][p] * self.pipes[p].num_connections * self.pipes[p].active #multiples by 1 if active, 0 if dead
 
             self.links[l].total_throughput = total_throughput
-            self.links[l].total_links = total_links
+            self.links[l].total_con = total_con
+            self.links[l].total_active_con = total_active_con
+
+    def show_inc_matrix(self): #showing the incidence matrix (each row is a link's vector)
+        print("inc mat:")
+        for row in self.incidence_matrix:
+            print(row)
+
+    def init_actives(self):
+        self.active_mat = self.incidence_matrix
+
+    def show_active_mat(self):
+        print("active mat:")
+        for row in self.active_mat:
+            print(row)
+
 class Link:
-    def __init__(self, index, capacity, start, stop, total_throughput = 0, pipes_active = []):
+    def __init__(self, index, capacity, start, stop, total_throughput = 0): #, pipes_active = [] 
         self.index = index
         self.capacity = capacity
         self.start = start
         self.stop = stop
         self.total_throughput = total_throughput
-        self.pipes_active = pipes_active
+        self.total_links = 0
+        self.total_active_con = 0
+
+        # self.pipes_active = pipes_active #was too buggy. screw this list.
     def __str__(self):
         return f"link {self.index} (cap: {self.capacity}, from {self.start} to {self.stop})"
     
@@ -73,33 +91,48 @@ class Pipe:
 
 
 def naive_water_filling(network1):
+    network1.init_actives()
+    network1.show_active_mat()
+
     network1.update_links() #updates link values for total number of connections, tput, and active conn
-
-    for k in range(len(network1.pipes)):
-        print(network1.pipes[k])
-
-    for l in range(len(network1.links)):
+    # for k in range(len(network1.pipes)):
+    #     print(network1.pipes[k])
+    for l in range(len(network1.links)): # a lot of printing
         print("\n")
         print(network1.links[l])
-        print(f"total usage so far: {network1.links[l].total_throughput} on {l} through {network1.links[l].total_links} connections")
-        print("active pipes:")
+        print(f"total usage so far: {network1.links[l].total_throughput} on {l} through {network1.links[l].total_active_con}/{network1.links[l].total_con} connections")
+        print("total pipes:")
         for p in range(network1.num_pipes):
             if(network1.incidence_matrix[l][p]==1):
                 print(network1.pipes[p])
+        print("active pipes")
+        for p in range(network1.num_pipes):
+            if(network1.active_mat[l][p]==1 and network1.pipes[p].active):
+                print(network1.pipes[p])
+    
+    legal_jumps = []
+    min_jump = (10**100,-1)
+    for l in range(len(network1.links)): #actual code
+        link = network1.links[l]
+        total_legal_jump = link.capacity - link.total_throughput
+        legal_jump = total_legal_jump / link.total_active_con
+        legal_jumps.append(legal_jump)
+
+        if(legal_jump < min_jump[0]):
+            min_jump = (legal_jump, l)
+    
+    print(legal_jumps)
+    print(min_jump)
+    
 
 
-
-        # # print(link.pipes_active[0])
-        # cur_active = sum([pipe.num_connections for pipe in link.pipes_active])
-        # print(f"total number of connections: {cur_active}")
-        # print(f"legal jump: {(link.capacity - link.total_throughput)/(cur_active) }")
     
 def main():
     network1 = Network([0,1,2,3]) #, [link1, link2, link3],[pipe1, pipe2] 
 
     network1.add_link(Link(0,10,0,1))
     network1.add_link(Link(1,20,1,2))
-    network1.add_link(Link(2,15,2,3))
+    network1.add_link(Link(2,16,2,3))
 
     network1.add_pipe(Pipe(0,0,2,[0,1],1))#index 0, src 0, dst 2, path [1,2], connections=1
     network1.add_pipe(Pipe(1,1,3,[1,2],3))
