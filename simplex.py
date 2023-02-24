@@ -1,10 +1,15 @@
 def print_matrix(matrix):
-    for row in matrix:
-        print("[", end='')
-        for number in row:
-            print(f"{number:3.2f}", end=', ')
-        print("]")
-    print()
+    if(print_on):
+        for row in matrix:
+            print("[", end='')
+            for number in row:
+                print(f"{number:3.2f}", end=', ')
+            print("]")
+        print()
+
+def printc(s):
+    if(print_on):
+        print(s)
 
 def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix,
     m = len(coef_mat) #number of rows
@@ -30,13 +35,13 @@ def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix
     print_matrix(tableau)
 
     #Computation Phase
-    # We track which values are in the basis with indices.
-    basis = [0,1,2]
+    # We track which column (variable) is the basis vector for each row
+    basis = [i for i in range(m)] #basis[i] is the column which equals e_i
     #Now we can attempt pivots
 
     worked_last_time = True
     while(worked_last_time):
-        print("----new pivot round-----")
+        printc("----new pivot round-----")
         print_matrix(tableau)
         worked_last_time = False
         pivoted_already = False
@@ -52,16 +57,16 @@ def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix
                         if(y_ratio < min_y[0]):
                             # print((y_ratio, i))
                             min_y = (y_ratio, i)
-                print(min_y) #Minimum leap
+                printc(min_y) #Minimum leap
                 # We may now pivot about tableau[index][j] where index = min_y[0]
                 if(min_y[1] != -1):
                     #Bookkeeping
                     pivoted_already = True
                     worked_last_time = True
-                    basis.append(j)
 
                     #Variable Calculation
                     index = min_y[1]
+                    basis[index] = j
                     val = tableau[index][j]
                     # print(f"index: {index}, val: {val}, j: {j}")
                     for i in range(m+n+1):
@@ -76,17 +81,26 @@ def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix
                                 tableau[i][j_alt] -= tableau[index][j_alt] * multiplier
                     print_matrix(tableau)
         
-        print(basis)
+        printc(basis)
+    
+    final_sol = [0 for i in range(m)]
+    
+    for i in range(m):
+        if(basis[i]>=m):
+            final_sol[basis[i]-m] = tableau[i][m+n]
+    printc(final_sol)
+    return final_sol
 
 
+print_on = False
 def main():
-    # conditions = [[3,4,0],
-    #               [2,0,10],
-    #               [0,5,7]]
-    conditions = [[1,1,0],
-                  [1,0,1],
-                  [0,1,1]]    
-    simplex_slack(conditions, [3,5,7], [1,1,1])
+    conditions = [[3,4,0],
+                  [2,0,10],
+                  [0,5,7]]
+    # conditions = [[1,1,0],
+    #               [1,0,1],
+    #               [0,1,1]]    
+    print(simplex_slack(conditions, [3,5,7], [1,1,1]))
 
 if __name__ == "__main__":
     main()
