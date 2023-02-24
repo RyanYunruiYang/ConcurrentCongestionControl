@@ -14,9 +14,12 @@ def printc(s):
 def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix,
     m = len(coef_mat) #number of rows
     n = len(coef_mat[0]) #number of columns
+    printc(f"m: {m}, n: {n}")
 
     #We start by creating the canonical simplex tableau.
     tableau = [[0 for _ in range(m+n+1)] for _ in range(m+1)]
+
+    print_matrix(tableau)
     #There are six things we need to initalize, four of which are nonzero
     #1. We add the identity matrix for the slack variables (which is great 
     # because we don't need to work for our basic feasible solution!)
@@ -24,7 +27,7 @@ def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix
         tableau[i][i] = 1
     #2. We add in the coefficients
     for i in range(m):
-        for j in range(m):
+        for j in range(n):
             tableau[i][j+m] = coef_mat[i][j]
     #3. We add the bounds
     for i in range(m):
@@ -83,24 +86,27 @@ def simplex_slack(coef_mat, bounds, payoffs):#conditions should be an mxn matrix
         
         printc(basis)
     
-    final_sol = [0 for i in range(m)]
+    final_sol = [0 for i in range(n)]
     
     for i in range(m):
         if(basis[i]>=m):
             final_sol[basis[i]-m] = tableau[i][m+n]
-    printc(final_sol)
-    return final_sol
+    
+    final_payoffs = [final_sol[i]*payoffs[i] for i in range(n)]
+    return final_payoffs
 
 
 print_on = False
 def main():
-    conditions = [[3,4,0],
-                  [2,0,10],
-                  [0,5,7]]
+    # conditions = [[3,4,0],
+    #               [2,0,10],
+    #               [0,5,7]]
     # conditions = [[1,1,0],
     #               [1,0,1],
-    #               [0,1,1]]    
-    print(simplex_slack(conditions, [3,5,7], [1,1,1]))
+    #               [0,1,1]]   
+    conditions = [[3,4,0],
+                  [2,0,1]]
+    print(simplex_slack(conditions, [3,10], [1,1,1]))
 
 if __name__ == "__main__":
     main()

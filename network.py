@@ -1,4 +1,5 @@
 import numpy as np
+import simplex
 
 class Network:
     def __init__(self, nodes, links = [], pipes = [], incidence_matrix = [], tunnels= []):
@@ -63,6 +64,15 @@ class Network:
         for row in self.active_mat:
             print(row)
     
+    def max_throughput(self):
+        coefs = self.incidence_matrix
+        bounds = [link.capacity for link in self.links]
+        payoffs = [1 for i in range(len(self.pipes))]
+        return simplex.simplex_slack(coefs, bounds, payoffs)
+
+    def max_resource_usage(self):
+        return simplex.simplex_slack(self.incidence_matrix, [link.capacity for link in self.links], [len(pipe.path) for pipe in self.pipes])
+
     def print_network(self, abridged=False):
         for l in range(len(self.links)): # a lot of printing
             print(self.links[l])
@@ -160,10 +170,10 @@ def naive_water_filling(network1, tcp_ass, printing=False):
     network1.print_network(True) #abridged=True
 
     print("\n ------ \n So the final mapping is")
-    print(tcp_ass)
-    print("to")
-    print([p.tput for p in network1.pipes])
-    return [p.tput for p in network1.pipes]
+    print(tcp_ass, end= ' to \n ')
+    print([p.tput for p in network1.pipes], end= ' per conn, and ')
+    print([p.tput*p.num_connections for p in network1.pipes], end=' per pipe.\n')
+    return [p.tput*p.num_connections for p in network1.pipes]
 
 
 
@@ -184,6 +194,10 @@ def main():
 
     print("\n waterfilling \n")
     naive_water_filling(network1, [100,1])
+
+    print(f"The max throughput was {sum(network1.max_throughput())}")
+    print(f"The max resource usage was {sum(network1.max_resource_usage())}")
+
 
 
 
