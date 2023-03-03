@@ -1,0 +1,26 @@
+Avg Decisions
+floor(log) : 29.65, 29.69
+floor(log^3): 14.73, 30.03
+x: 19.77, 30.32
+floor(100x): [19.77, 20.32]
+floor(x): [19.77, 20.32]
+floor(sqrt):[28.92, 28.78]
+
+
+floor(0.06x):
+temp at [10, 30], overall avg [19.93, 20.48]
+
+floor(0.055x):
+stable at [16,29.4]
+It would be acceptable if it was [29.4,16]--the existing connection takes precedence-- but that's not what happens, the new links gets precedence.
+
+floor(0.05x):
+[28.66, 27.92]
+
+
+
+Big buckets: near [30,30]
+
+Medium Buckets (between big and small): stable at [15,30] ish.
+
+Small buckets: [10,30] oscillation, overall avg [20,20]
